@@ -1,8 +1,7 @@
-
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { AlertTriangle, AlertCircle, Clock } from 'lucide-react';
+import { AlertTriangle, AlertCircle, Clock, CheckCircle } from 'lucide-react';
 
 interface AlertsPanelProps {
   alerts: any[];

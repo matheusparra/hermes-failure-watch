@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -9,29 +9,43 @@ import EquipmentCard from './EquipmentCard';
 import AlertsPanel from './AlertsPanel';
 import ChartsPanel from './ChartsPanel';
 import ReportsPanel from './ReportsPanel';
-import { generateMockData, checkForAlerts } from '../utils/mockData';
+import { useSupabaseData } from '../hooks/useSupabaseData';
 
 const Dashboard = () => {
-  const [equipmentData, setEquipmentData] = useState<any[]>([]);
-  const [alerts, setAlerts] = useState<any[]>([]);
   const [isConnected, setIsConnected] = useState(true);
-
-  useEffect(() => {
-    // Simular dados em tempo real
-    const interval = setInterval(() => {
-      const newData = generateMockData();
-      setEquipmentData(newData);
-      
-      // Verificar alertas
-      const newAlerts = checkForAlerts(newData);
-      setAlerts(newAlerts);
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, []);
+  const { equipmentData, alerts, isLoading, error } = useSupabaseData();
 
   const criticalAlerts = alerts.filter(alert => alert.severity === 'critical').length;
   const warningAlerts = alerts.filter(alert => alert.severity === 'warning').length;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-900 text-white p-6 flex items-center justify-center">
+        <div className="text-center">
+          <Activity className="w-12 h-12 text-blue-400 mx-auto mb-4 animate-spin" />
+          <h2 className="text-xl font-semibold mb-2">Carregando dados dos sensores...</h2>
+          <p className="text-slate-400">Conectando com o banco de dados</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-slate-900 text-white p-6 flex items-center justify-center">
+        <div className="text-center">
+          <AlertTriangle className="w-12 h-12 text-red-400 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Erro ao carregar dados</h2>
+          <p className="text-slate-400 mb-4">
+            {error instanceof Error ? error.message : 'Erro desconhecido'}
+          </p>
+          <p className="text-sm text-slate-500">
+            Verifique se o Supabase está configurado corretamente
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-900 text-white p-6">
@@ -70,7 +84,7 @@ const Dashboard = () => {
               <div className="text-3xl font-bold text-green-400">
                 {equipmentData.length}
               </div>
-              <p className="text-slate-400 text-sm">de 3 equipamentos</p>
+              <p className="text-slate-400 text-sm">máquinas monitoradas</p>
             </CardContent>
           </Card>
 
@@ -104,7 +118,7 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-blue-400">
-                94.2%
+                {criticalAlerts === 0 ? '98.5%' : warningAlerts > 0 ? '94.2%' : '89.1%'}
               </div>
               <p className="text-slate-400 text-sm">últimas 24h</p>
             </CardContent>
@@ -134,7 +148,7 @@ const Dashboard = () => {
 
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {equipmentData.map((equipment, index) => (
+              {equipmentData.map((equipment) => (
                 <EquipmentCard 
                   key={equipment.id} 
                   equipment={equipment}
