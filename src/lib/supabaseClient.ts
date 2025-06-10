@@ -4,11 +4,19 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
-}
+// Para desenvolvimento no Lovable, usar valores temporários se as variáveis não estiverem definidas
+const defaultUrl = supabaseUrl || 'https://placeholder.supabase.co';
+const defaultKey = supabaseAnonKey || 'placeholder-key';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Só criar o cliente se tivermos valores reais
+export const supabase = createClient(defaultUrl, defaultKey);
+
+// Função para verificar se a Supabase está configurada
+export const isSupabaseConfigured = (): boolean => {
+  return !!(supabaseUrl && supabaseAnonKey && 
+           supabaseUrl !== 'https://placeholder.supabase.co' && 
+           supabaseAnonKey !== 'placeholder-key');
+};
 
 // Tipos para as tabelas
 export interface Maquina {

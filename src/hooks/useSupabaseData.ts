@@ -1,7 +1,49 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase, type EquipmentData, type Alert } from '../lib/supabaseClient';
+import { supabase, isSupabaseConfigured, type EquipmentData, type Alert } from '../lib/supabaseClient';
+
+// Dados simulados para quando a Supabase não estiver configurada
+const mockEquipmentData: EquipmentData[] = [
+  {
+    id: '1',
+    name: 'Prensa Hidráulica 01',
+    location: 'Setor de Prensagem',
+    status: 'critical',
+    sensors: {
+      temperature: 98.2,
+      vibration: 3150,
+      rpm: 1850,
+      humidity: 45.8,
+    },
+    lastReading: new Date().toISOString(),
+  },
+  {
+    id: '2',
+    name: 'Motor CNC 05',
+    location: 'Oficina de Usinagem',
+    status: 'warning',
+    sensors: {
+      temperature: 87.5,
+      vibration: 2650,
+      rpm: 1920,
+      humidity: 42.3,
+    },
+    lastReading: new Date().toISOString(),
+  },
+  {
+    id: '3',
+    name: 'Esteira Rolante Central',
+    location: 'Linha de Montagem',
+    status: 'normal',
+    sensors: {
+      temperature: 72.1,
+      vibration: 1800,
+      rpm: 1750,
+      humidity: 38.9,
+    },
+    lastReading: new Date().toISOString(),
+  },
+];
 
 // Função para calcular vibração média dos 3 eixos
 const calculateAverageVibration = (x: number, y: number, z: number): number => {
@@ -113,11 +155,18 @@ const generateAlerts = (equipmentData: EquipmentData[]): Alert[] => {
 
 export const useSupabaseData = () => {
   const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [isConfigured] = useState(isSupabaseConfigured());
 
   // Query para buscar os dados mais recentes de cada máquina
   const { data: equipmentData = [], isLoading, error, refetch } = useQuery({
     queryKey: ['equipment-data'],
     queryFn: async (): Promise<EquipmentData[]> => {
+      // Se a Supabase não estiver configurada, retornar dados simulados
+      if (!isConfigured) {
+        console.log('📝 Usando dados simulados - Supabase não configurada');
+        return mockEquipmentData;
+      }
+
       // Buscar todas as máquinas
       const { data: maquinas, error: maquinasError } = await supabase
         .from('maquinas')
@@ -179,7 +228,7 @@ export const useSupabaseData = () => {
 
       return Promise.all(equipmentPromises);
     },
-    refetchInterval: 3000, // Atualizar a cada 3 segundos
+    refetchInterval: isConfigured ? 3000 : 5000, // Atualizar menos frequentemente se usando dados simulados
   });
 
   // Atualizar alertas sempre que os dados dos equipamentos mudarem
@@ -196,5 +245,6 @@ export const useSupabaseData = () => {
     isLoading,
     error,
     refetch,
+    isSupabaseConfigured: isConfigured,
   };
 };
