@@ -1,58 +1,15 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase, isSupabaseConfigured, type EquipmentData, type Alert } from '../lib/supabaseClient';
-
-// Dados simulados para quando a Supabase não estiver configurada
-const mockEquipmentData: EquipmentData[] = [
-  {
-    id: '1',
-    name: 'Prensa Hidráulica 01',
-    location: 'Setor de Prensagem',
-    status: 'critical',
-    sensors: {
-      temperature: 98.2,
-      vibration: 3150,
-      rpm: 1850,
-      humidity: 45.8,
-    },
-    lastReading: new Date().toISOString(),
-  },
-  {
-    id: '2',
-    name: 'Motor CNC 05',
-    location: 'Oficina de Usinagem',
-    status: 'warning',
-    sensors: {
-      temperature: 87.5,
-      vibration: 2650,
-      rpm: 1920,
-      humidity: 42.3,
-    },
-    lastReading: new Date().toISOString(),
-  },
-  {
-    id: '3',
-    name: 'Esteira Rolante Central',
-    location: 'Linha de Montagem',
-    status: 'normal',
-    sensors: {
-      temperature: 72.1,
-      vibration: 1800,
-      rpm: 1750,
-      humidity: 38.9,
-    },
-    lastReading: new Date().toISOString(),
-  },
-];
+import { supabase, isSupabaseConfigured, type EquipmentData, type Alert, type Maquina, type LeituraSensor } from '../lib/supabaseClient';
 
 // Função para calcular vibração média dos 3 eixos
 const calculateAverageVibration = (x: number, y: number, z: number): number => {
   return Math.round((x + y + z) / 3);
 };
 
-// Função para simular RPM baseado na vibração (para manter compatibilidade com o dashboard)
+// Função para simular RPM baseado na vibração
 const calculateRPM = (vibration: number): number => {
-  // Mapear vibração (500-3500) para RPM (1500-2000)
   const minVib = 500, maxVib = 3500;
   const minRPM = 1500, maxRPM = 2000;
   
@@ -124,7 +81,7 @@ const generateAlerts = (equipmentData: EquipmentData[]): Alert[] => {
       });
     }
 
-    // Verificar RPM (simulado)
+    // Verificar RPM
     if (equipment.sensors.rpm < 1600) {
       alerts.push({
         equipmentId: equipment.id,
@@ -161,31 +118,55 @@ export const useSupabaseData = () => {
   const { data: equipmentData = [], isLoading, error, refetch } = useQuery({
     queryKey: ['equipment-data'],
     queryFn: async (): Promise<EquipmentData[]> => {
-      // Se a Supabase não estiver configurada, retornar dados simulados
-      if (!isConfigured) {
-        console.log('📝 Usando dados simulados - Supabase não configurada');
-        return mockEquipmentData;
-      }
+      console.log('🔄 Buscando dados das máquinas no Supabase...');
 
       // Buscar todas as máquinas
       const { data: maquinas, error: maquinasError } = await supabase
         .from('maquinas')
         .select('*');
 
-      if (maquinasError) throw maquinasError;
+      if (maquinasError) {
+        console.error('❌ Erro ao buscar máquinas:', maquinasError);
+        throw maquinasError;
+      }
+
+      console.log(`📋 Encontradas ${maquinas?.length || 0} máquinas`);
+
+      if (!maquinas || maquinas.length === 0) {
+        console.log('⚠️ Nenhuma máquina encontrada, retornando array vazio');
+        return [];
+      }
 
       // Para cada máquina, buscar a leitura mais recente
-      const equipmentPromises = maquinas.map(async (maquina) => {
+      const equipmentPromises = maquinas.map(async (maquina: Maquina) => {
         const { data: leitura, error: leituraError } = await supabase
           .from('leituras_sensores')
           .select('*')
           .eq('id_maquina', maquina.id)
           .order('timestamp_leitura', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
         if (leituraError) {
-          console.warn(`Nenhuma leitura encontrada para máquina ${maquina.nome}`);
+          console.error(`❌ Erro ao buscar leitura para máquina ${maquina.nome}:`, leituraError);
+          // Retornar dados padrão se houver erro
+          return {
+            id: maquina.id,
+            name: maquina.nome,
+            location: maquina.localizacao,
+            status: 'normal' as const,
+            sensors: {
+              temperature: 25,
+              vibration: 1000,
+              rpm: 1750,
+              humidity: 45,
+            },
+            lastReading: new Date().toISOString(),
+          };
+        }
+
+        if (!leitura) {
+          console.warn(`⚠️ Nenhuma leitura encontrada para máquina ${maquina.nome}`);
           // Retornar dados padrão se não houver leitura
           return {
             id: maquina.id,
@@ -193,10 +174,10 @@ export const useSupabaseData = () => {
             location: maquina.localizacao,
             status: 'normal' as const,
             sensors: {
-              temperature: 0,
-              vibration: 0,
-              rpm: 0,
-              humidity: 0,
+              temperature: 25,
+              vibration: 1000,
+              rpm: 1750,
+              humidity: 45,
             },
             lastReading: new Date().toISOString(),
           };
@@ -210,6 +191,8 @@ export const useSupabaseData = () => {
 
         const rpm = calculateRPM(vibration);
         const status = getEquipmentStatus(leitura.temperatura, vibration);
+
+        console.log(`✅ Dados processados para ${maquina.nome}: T=${leitura.temperatura}°C, V=${vibration}, RPM=${rpm}`);
 
         return {
           id: maquina.id,
@@ -226,9 +209,11 @@ export const useSupabaseData = () => {
         };
       });
 
-      return Promise.all(equipmentPromises);
+      const results = await Promise.all(equipmentPromises);
+      console.log(`🎉 Processamento concluído: ${results.length} equipamentos`);
+      return results;
     },
-    refetchInterval: isConfigured ? 3000 : 5000, // Atualizar menos frequentemente se usando dados simulados
+    refetchInterval: 3000, // Atualizar a cada 3 segundos
   });
 
   // Atualizar alertas sempre que os dados dos equipamentos mudarem
@@ -236,6 +221,7 @@ export const useSupabaseData = () => {
     if (equipmentData.length > 0) {
       const newAlerts = generateAlerts(equipmentData);
       setAlerts(newAlerts);
+      console.log(`🚨 ${newAlerts.length} alertas gerados`);
     }
   }, [equipmentData]);
 

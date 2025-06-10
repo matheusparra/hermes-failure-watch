@@ -9,6 +9,100 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      alertas: {
+        Row: {
+          created_at: string | null
+          descricao: string
+          id: string
+          id_maquina: string
+          resolved_at: string | null
+          resolvido: boolean | null
+          severidade: string
+          threshold_valor: number | null
+          tipo_alerta: string
+          titulo: string
+          valor_sensor: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          descricao: string
+          id?: string
+          id_maquina: string
+          resolved_at?: string | null
+          resolvido?: boolean | null
+          severidade: string
+          threshold_valor?: number | null
+          tipo_alerta: string
+          titulo: string
+          valor_sensor?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          descricao?: string
+          id?: string
+          id_maquina?: string
+          resolved_at?: string | null
+          resolvido?: boolean | null
+          severidade?: string
+          threshold_valor?: number | null
+          tipo_alerta?: string
+          titulo?: string
+          valor_sensor?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alertas_id_maquina_fkey"
+            columns: ["id_maquina"]
+            isOneToOne: false
+            referencedRelation: "maquinas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      configuracoes_limites: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          id: string
+          id_maquina: string
+          limite_critical: number
+          limite_warning: number
+          tipo_sensor: string
+          unidade: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          id?: string
+          id_maquina: string
+          limite_critical: number
+          limite_warning: number
+          tipo_sensor: string
+          unidade: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          id?: string
+          id_maquina?: string
+          limite_critical?: number
+          limite_warning?: number
+          tipo_sensor?: string
+          unidade?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "configuracoes_limites_id_maquina_fkey"
+            columns: ["id_maquina"]
+            isOneToOne: false
+            referencedRelation: "maquinas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       flood_data: {
         Row: {
           chuva_1h: number
@@ -48,6 +142,127 @@ export type Database = {
           umidade?: number
           updated_at?: string
           vento?: number
+        }
+        Relationships: []
+      }
+      leituras_sensores: {
+        Row: {
+          id: number
+          id_maquina: string
+          temperatura: number
+          timestamp_leitura: string | null
+          umidade: number
+          vibracao_x: number
+          vibracao_y: number
+          vibracao_z: number
+        }
+        Insert: {
+          id?: number
+          id_maquina: string
+          temperatura: number
+          timestamp_leitura?: string | null
+          umidade: number
+          vibracao_x: number
+          vibracao_y: number
+          vibracao_z: number
+        }
+        Update: {
+          id?: number
+          id_maquina?: string
+          temperatura?: number
+          timestamp_leitura?: string | null
+          umidade?: number
+          vibracao_x?: number
+          vibracao_y?: number
+          vibracao_z?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leituras_sensores_id_maquina_fkey"
+            columns: ["id_maquina"]
+            isOneToOne: false
+            referencedRelation: "maquinas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      manutencoes: {
+        Row: {
+          created_at: string | null
+          custo: number | null
+          data_fim: string | null
+          data_inicio: string
+          descricao: string
+          id: string
+          id_maquina: string
+          observacoes: string | null
+          status_manutencao: string
+          tecnico_responsavel: string | null
+          tipo_manutencao: string
+        }
+        Insert: {
+          created_at?: string | null
+          custo?: number | null
+          data_fim?: string | null
+          data_inicio: string
+          descricao: string
+          id?: string
+          id_maquina: string
+          observacoes?: string | null
+          status_manutencao?: string
+          tecnico_responsavel?: string | null
+          tipo_manutencao: string
+        }
+        Update: {
+          created_at?: string | null
+          custo?: number | null
+          data_fim?: string | null
+          data_inicio?: string
+          descricao?: string
+          id?: string
+          id_maquina?: string
+          observacoes?: string | null
+          status_manutencao?: string
+          tecnico_responsavel?: string | null
+          tipo_manutencao?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "manutencoes_id_maquina_fkey"
+            columns: ["id_maquina"]
+            isOneToOne: false
+            referencedRelation: "maquinas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      maquinas: {
+        Row: {
+          created_at: string | null
+          id: string
+          localizacao: string
+          nome: string
+          status_operacional: string
+          tipo_maquina: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          localizacao: string
+          nome: string
+          status_operacional?: string
+          tipo_maquina?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          localizacao?: string
+          nome?: string
+          status_operacional?: string
+          tipo_maquina?: string
+          updated_at?: string | null
         }
         Relationships: []
       }

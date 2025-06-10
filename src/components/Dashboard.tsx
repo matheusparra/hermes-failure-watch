@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { AlertTriangle, Activity, Settings, TrendingUp, Database } from 'lucide-react';
+import { AlertTriangle, Activity, Settings, TrendingUp } from 'lucide-react';
 import EquipmentCard from './EquipmentCard';
 import AlertsPanel from './AlertsPanel';
 import ChartsPanel from './ChartsPanel';
@@ -24,15 +24,13 @@ const Dashboard = () => {
         <div className="text-center">
           <Activity className="w-12 h-12 text-blue-400 mx-auto mb-4 animate-spin" />
           <h2 className="text-xl font-semibold mb-2">Carregando dados dos sensores...</h2>
-          <p className="text-slate-400">
-            {isSupabaseConfigured ? 'Conectando com o banco de dados' : 'Carregando dados simulados'}
-          </p>
+          <p className="text-slate-400">Conectando com o banco de dados</p>
         </div>
       </div>
     );
   }
 
-  if (error && isSupabaseConfigured) {
+  if (error) {
     return (
       <div className="min-h-screen bg-slate-900 text-white p-6 flex items-center justify-center">
         <div className="text-center">
@@ -42,7 +40,7 @@ const Dashboard = () => {
             {error instanceof Error ? error.message : 'Erro desconhecido'}
           </p>
           <p className="text-sm text-slate-500">
-            Verifique se o Supabase está configurado corretamente
+            Verifique a conexão com o banco de dados
           </p>
         </div>
       </div>
@@ -75,16 +73,6 @@ const Dashboard = () => {
             )}
           </div>
         </div>
-
-        {/* Aviso sobre dados simulados */}
-        {!isSupabaseConfigured && (
-          <Alert className="border-blue-500 bg-blue-500/10 text-blue-400 mb-6">
-            <Database className="h-4 w-4" />
-            <AlertDescription className="ml-2">
-              <strong>Modo Demo:</strong> Usando dados simulados. Para conectar dados reais, configure o Supabase seguindo as instruções no arquivo SETUP.md
-            </AlertDescription>
-          </Alert>
-        )}
 
         {/* Status Overview */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
